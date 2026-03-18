@@ -159,6 +159,12 @@ export const translations = {
     l6PlayAgain: '再玩一局',
     l6BackToStart: '回到首页',
     l6YouFolded: '你弃牌了。',
+    l6ResetChips: '重置筹码',
+    l6CustomChips: '自定义筹码',
+    l6SetChips: '设置',
+    l6ChipsAmount: '筹码数量',
+    l6AIRaised: 'AI 加注了！你需要决定是跟注、再加注还是弃牌。',
+    l6CommunityCards: '公共牌',
 
     // Hints
     hintStrongPreflop: '你的起手牌很强！考虑加注来建立底池。',
@@ -326,6 +332,12 @@ export const translations = {
     l6PlayAgain: 'Play Again',
     l6BackToStart: 'Back to Start',
     l6YouFolded: 'You folded.',
+    l6ResetChips: 'Reset Chips',
+    l6CustomChips: 'Custom Chips',
+    l6SetChips: 'Set',
+    l6ChipsAmount: 'Chip Amount',
+    l6AIRaised: 'AI raised! You need to decide: call, re-raise, or fold.',
+    l6CommunityCards: 'Community Cards',
 
     // Hints
     hintStrongPreflop: 'You have a strong starting hand! Consider raising to build the pot.',

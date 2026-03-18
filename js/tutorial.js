@@ -410,117 +410,190 @@ function renderPractice(container, app) {
 // ========== Practice Game Logic ==========
 
 export class PokerGame {
-  constructor() {
+  constructor(chips = 1000) {
+    this.initialChips = chips;
     this.reset();
   }
 
   reset() {
-    this.playerChips = 1000;
-    this.aiChips = 1000;
+    this.playerChips = this.initialChips;
+    this.aiChips = this.initialChips;
+    this.startNewHand();
+  }
+
+  setChips(amount) {
+    this.initialChips = amount;
+    this.playerChips = amount;
+    this.aiChips = amount;
     this.startNewHand();
   }
 
   startNewHand() {
+    // Check if either player is out of chips
+    if (this.playerChips <= 0) this.playerChips = 0;
+    if (this.aiChips <= 0) this.aiChips = 0;
+
     const deck = shuffleDeck(createDeck());
     this.playerCards = [deck[0], deck[1]];
     this.aiCards = [deck[2], deck[3]];
     this.communityCards = [];
     this.fullCommunity = [deck[4], deck[5], deck[6], deck[7], deck[8]];
     this.pot = 0;
-    this.stage = 'preflop'; // preflop, flop, turn, river, showdown
+    this.stage = 'preflop';
     this.playerBet = 0;
     this.aiBet = 0;
-    this.currentBet = 20; // Big blind
+    this.currentBet = 0;
     this.finished = false;
     this.result = null;
     this.message = '';
     this.showHint = false;
     this.playerFolded = false;
     this.aiFolded = false;
+    this.aiRaisedPending = false; // Track if AI raised and player needs to respond
 
     // Post blinds
-    const sbAmount = 10;
-    const bbAmount = 20;
-    this.playerBet = sbAmount; // Player is SB
-    this.aiBet = bbAmount; // AI is BB
+    const sbAmount = Math.min(10, this.playerChips);
+    const bbAmount = Math.min(20, this.aiChips);
+    this.playerBet = sbAmount;
+    this.aiBet = bbAmount;
     this.playerChips -= sbAmount;
     this.aiChips -= bbAmount;
     this.pot = sbAmount + bbAmount;
     this.currentBet = bbAmount;
-    this.waitingForPlayer = true;
   }
 
   getAvailableActions() {
     if (this.finished) return [];
+    if (this.playerChips <= 0 && this.aiChips <= 0) return [];
+
     const toCall = this.currentBet - this.playerBet;
     const actions = ['fold'];
 
-    if (toCall === 0) {
+    if (toCall <= 0) {
       actions.push('check');
     } else {
       actions.push('call');
     }
 
-    if (this.playerChips > toCall) {
+    if (this.playerChips > toCall && this.playerChips > 0) {
       actions.push('raise');
     }
 
-    actions.push('allin');
+    if (this.playerChips > 0) {
+      actions.push('allin');
+    }
+
     return actions;
   }
 
   playerAction(action, raiseAmount = 0) {
     if (this.finished) return;
 
-    const toCall = this.currentBet - this.playerBet;
+    const toCall = Math.max(0, this.currentBet - this.playerBet);
+    this.aiRaisedPending = false;
 
     switch (action) {
       case 'fold':
         this.playerFolded = true;
         this.finished = true;
         this.result = 'lose';
+        // AI gets the pot
+        this.aiChips += this.pot;
+        this.pot = 0;
         this.message = t('l6YouFolded');
         return;
 
       case 'check':
-        // AI turn
-        this.doAIAction();
-        this.advanceStageIfNeeded();
+        this._doAITurnAndMaybeAdvance();
         return;
 
-      case 'call':
+      case 'call': {
         const callAmt = Math.min(toCall, this.playerChips);
         this.playerChips -= callAmt;
         this.playerBet += callAmt;
         this.pot += callAmt;
-        this.doAIAction();
-        this.advanceStageIfNeeded();
+        // After calling, bets are equal → AI gets a turn or we advance
+        this._doAITurnAndMaybeAdvance();
         return;
+      }
 
-      case 'raise':
-        const totalRaise = toCall + raiseAmount;
-        const raiseAmt = Math.min(totalRaise, this.playerChips);
-        this.playerChips -= raiseAmt;
-        this.playerBet += raiseAmt;
-        this.pot += raiseAmt;
+      case 'raise': {
+        const raiseTotal = Math.min(toCall + raiseAmount, this.playerChips);
+        this.playerChips -= raiseTotal;
+        this.playerBet += raiseTotal;
+        this.pot += raiseTotal;
         this.currentBet = this.playerBet;
-        this.doAIAction();
-        this.advanceStageIfNeeded();
+        // After raise, AI must respond
+        this._doAIResponse();
         return;
+      }
 
-      case 'allin':
+      case 'allin': {
         const allInAmt = this.playerChips;
         this.pot += allInAmt;
         this.playerBet += allInAmt;
         this.playerChips = 0;
         this.currentBet = Math.max(this.currentBet, this.playerBet);
-        this.doAIAction();
-        this.advanceStageIfNeeded();
+        // AI must respond to potential raise
+        this._doAIResponse();
         return;
+      }
     }
   }
 
-  doAIAction() {
+  // After player checks or calls (bets are equal), AI can act then advance
+  _doAITurnAndMaybeAdvance() {
+    if (this.finished) return;
+
+    // If both bets are equal already (player checked/called), let AI act
+    const decision = aiDecision(
+      this.aiCards, this.communityCards,
+      this.pot, this.currentBet, this.aiBet,
+      this.aiChips, this.stage
+    );
+
+    switch (decision.action) {
+      case 'fold':
+        this.aiFolded = true;
+        this.finished = true;
+        this.result = 'win';
+        this.playerChips += this.pot;
+        this.pot = 0;
+        this.message = t('l6AIFolded');
+        return;
+
+      case 'check':
+        // Both checked → advance stage
+        this._advanceStage();
+        return;
+
+      case 'call': {
+        const callAmt = Math.min(this.currentBet - this.aiBet, this.aiChips);
+        this.aiChips -= callAmt;
+        this.aiBet += callAmt;
+        this.pot += callAmt;
+        // Bets equal → advance
+        this._advanceStage();
+        return;
+      }
+
+      case 'raise': {
+        const toCallAI = Math.max(0, this.currentBet - this.aiBet);
+        const totalAmt = Math.min(toCallAI + (decision.amount || 20), this.aiChips);
+        this.aiChips -= totalAmt;
+        this.aiBet += totalAmt;
+        this.pot += totalAmt;
+        this.currentBet = this.aiBet;
+        // AI raised → player must respond (do NOT advance)
+        this.aiRaisedPending = true;
+        this.message = t('l6AIRaised');
+        return;
+      }
+    }
+  }
+
+  // After player raises/allins, AI responds then we advance
+  _doAIResponse() {
     if (this.finished) return;
 
     const decision = aiDecision(
@@ -534,37 +607,45 @@ export class PokerGame {
         this.aiFolded = true;
         this.finished = true;
         this.result = 'win';
+        this.playerChips += this.pot;
+        this.pot = 0;
         this.message = t('l6AIFolded');
         return;
 
-      case 'check':
-        return;
-
       case 'call':
-        const callAmt = Math.min(this.currentBet - this.aiBet, this.aiChips);
+      case 'check': {
+        const callAmt = Math.min(Math.max(0, this.currentBet - this.aiBet), this.aiChips);
         this.aiChips -= callAmt;
         this.aiBet += callAmt;
         this.pot += callAmt;
+        // Bets equal → advance
+        this._advanceStage();
         return;
+      }
 
-      case 'raise':
-        const toCall = this.currentBet - this.aiBet;
-        const totalAmt = Math.min(toCall + (decision.amount || 20), this.aiChips);
+      case 'raise': {
+        // AI re-raises → player must respond again
+        const toCallAI = Math.max(0, this.currentBet - this.aiBet);
+        const totalAmt = Math.min(toCallAI + (decision.amount || 20), this.aiChips);
         this.aiChips -= totalAmt;
         this.aiBet += totalAmt;
         this.pot += totalAmt;
-        this.currentBet = Math.max(this.currentBet, this.aiBet);
+        this.currentBet = this.aiBet;
+        this.aiRaisedPending = true;
+        this.message = t('l6AIRaised');
         return;
+      }
     }
   }
 
-  advanceStageIfNeeded() {
+  _advanceStage() {
     if (this.finished) return;
 
     // Reset bets for next round
     this.playerBet = 0;
     this.aiBet = 0;
     this.currentBet = 0;
+    this.message = '';
 
     switch (this.stage) {
       case 'preflop':
@@ -581,12 +662,42 @@ export class PokerGame {
         break;
       case 'river':
         this.stage = 'showdown';
-        this.doShowdown();
+        this._doShowdown();
         break;
+    }
+
+    // If both are all-in, run remaining stages automatically
+    if (!this.finished && this.playerChips <= 0 && this.aiChips <= 0) {
+      this._runOutRemainingStages();
     }
   }
 
-  doShowdown() {
+  _runOutRemainingStages() {
+    while (!this.finished) {
+      switch (this.stage) {
+        case 'preflop':
+          this.stage = 'flop';
+          this.communityCards = this.fullCommunity.slice(0, 3);
+          break;
+        case 'flop':
+          this.stage = 'turn';
+          this.communityCards = this.fullCommunity.slice(0, 4);
+          break;
+        case 'turn':
+          this.stage = 'river';
+          this.communityCards = this.fullCommunity.slice(0, 5);
+          break;
+        case 'river':
+          this.stage = 'showdown';
+          this._doShowdown();
+          return;
+        default:
+          return;
+      }
+    }
+  }
+
+  _doShowdown() {
     this.finished = true;
     this.communityCards = this.fullCommunity.slice(0, 5);
 
@@ -611,6 +722,7 @@ export class PokerGame {
       this.playerChips += Math.floor(this.pot / 2);
       this.aiChips += Math.ceil(this.pot / 2);
     }
+    this.pot = 0;
   }
 
   getHint() {

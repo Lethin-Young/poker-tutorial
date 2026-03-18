@@ -1301,3 +1301,199 @@ body {
 .flex-center { display: flex; align-items: center; justify-content: center; }
 .gap-1 { gap: 0.5rem; }
 .gap-2 { gap: 1rem; }
+
+/* ============ CHIP CONTROLS ============ */
+.chip-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.chip-custom-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chip-custom-input input[type="number"] {
+  width: 100px;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: var(--font-main);
+  text-align: center;
+}
+
+.chip-custom-input input[type="number"]:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.8rem;
+  font-size: 0.8rem;
+}
+
+/* ============ REDESIGNED PRACTICE TABLE V2 ============ */
+.practice-table-v2 {
+  background: linear-gradient(180deg, #0d3320 0%, #1a5c2e 30%, #1a5c2e 70%, #0d3320 100%);
+  border-radius: var(--radius-lg);
+  border: 6px solid #3a2a1a;
+  box-shadow:
+    inset 0 0 50px rgba(0, 0, 0, 0.25),
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    0 0 0 3px #5a4a3a;
+  padding: 1.5rem 2rem;
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.table-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1rem 0;
+  width: 100%;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.card-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.hand-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gold-light);
+  margin-top: 0.2rem;
+}
+
+/* Community cards: always 5 slots in a row */
+.community-card-row {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  align-items: center;
+  min-height: 112px;
+}
+
+.card-placeholder {
+  width: 80px;
+  height: 112px;
+  border-radius: var(--radius-card);
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* Pot display between sections */
+.table-divider {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0.6rem 0;
+  position: relative;
+}
+
+.table-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pot-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+.pot-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pot-amount {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--gold-light);
+}
+
+.table-divider-thin {
+  width: 80%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.community-section {
+  padding: 1.2rem 0;
+}
+
+.community-section .section-label {
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 0.3rem;
+}
+
+.strength-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+/* Responsive for new table */
+@media (max-width: 600px) {
+  .practice-table-v2 {
+    padding: 1rem;
+    border-width: 4px;
+  }
+
+  .community-card-row {
+    gap: 0.3rem;
+    min-height: 84px;
+  }
+
+  .card-placeholder {
+    width: 60px;
+    height: 84px;
+  }
+
+  .chip-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+}

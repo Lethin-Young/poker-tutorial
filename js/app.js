@@ -186,7 +186,7 @@ class App {
 
     const strengthColor = strength > 60 ? '#2ecc71' : strength > 35 ? '#f39c12' : '#e74c3c';
 
-    // Game info bar
+    // Game info bar with chip controls
     let html = `
       <div class="game-info-bar">
         <div class="chip-count">
@@ -201,50 +201,94 @@ class App {
       </div>
     `;
 
-    // Table
-    html += `<div class="practice-table">`;
-
-    // AI area
-    html += `<div class="opponent-area">
-      <div class="opponent-label">${t('l6AI')}</div>
-      <div class="card-container" style="gap:0.4rem;padding:0">
-        ${g.finished && !g.playerFolded && !g.aiFolded
-          ? g.aiCards.map(c => renderCardFromObj(c, { animated: true })).join('')
-          : `${renderCard('', '', { faceDown: true })} ${renderCard('', '', { faceDown: true })}`
-        }
-      </div>
-      ${g.finished && g.aiHandName ? `<div style="font-size:0.8rem;color:var(--gold-light)">${g.aiHandName}</div>` : ''}
-    </div>`;
-
-    // Community cards
-    html += `<div class="table-center">
-      <div class="card-container" style="gap:0.5rem;padding:0">
-        ${g.communityCards.length > 0
-          ? g.communityCards.map((c, i) => renderCardFromObj(c, { animated: true, delay: i * 0.1 })).join('')
-          : '<div style="color:var(--text-muted);font-size:0.85rem;padding:1rem">' + (getLang() === 'zh' ? '等待发牌...' : 'Waiting for cards...') + '</div>'
-        }
-      </div>
-      <div class="table-pot">${t('l6Pot')}: ${g.pot}</div>
-    </div>`;
-
-    // Player area
-    html += `<div class="player-area">
-      <div class="card-container" style="gap:0.4rem;padding:0">
-        ${g.playerCards.map(c => renderCardFromObj(c, { animated: true })).join('')}
-      </div>
-      <div class="player-label">${t('l6You')}</div>
-      ${!g.finished ? `
-        <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--text-muted)">
-          ${t('l6HandStrength')}
-          <div class="hand-strength-bar">
-            <div class="hand-strength-fill" style="width:${strength}%;background:${strengthColor}"></div>
-          </div>
+    // Chip reset controls
+    html += `
+      <div class="chip-controls">
+        <button class="btn btn-secondary btn-sm" onclick="window.app.resetChips()">
+          🔄 ${t('l6ResetChips')}
+        </button>
+        <div class="chip-custom-input">
+          <input type="number" id="custom-chips" min="100" max="100000" step="100" value="${g.initialChips}" placeholder="${t('l6ChipsAmount')}">
+          <button class="btn btn-primary btn-sm" onclick="window.app.setCustomChips()">
+            ${t('l6SetChips')}
+          </button>
         </div>
-      ` : ''}
-      ${g.finished && g.playerHandName ? `<div style="font-size:0.8rem;color:var(--gold-light)">${g.playerHandName}</div>` : ''}
-    </div>`;
+      </div>
+    `;
 
-    html += `</div>`; // close practice-table
+    // === REDESIGNED TABLE: vertical layout with clear separation ===
+    html += `<div class="practice-table-v2">`;
+
+    // AI section
+    html += `
+      <div class="table-section ai-section">
+        <div class="section-label">${t('l6AI')}</div>
+        <div class="card-row">
+          ${g.finished && !g.playerFolded && !g.aiFolded
+            ? g.aiCards.map(c => renderCardFromObj(c, { animated: true })).join('')
+            : `${renderCard('', '', { faceDown: true })} ${renderCard('', '', { faceDown: true })}`
+          }
+        </div>
+        ${g.finished && g.aiHandName ? `<div class="hand-name">${g.aiHandName}</div>` : ''}
+      </div>
+    `;
+
+    // Divider + Pot (clearly visible)
+    html += `
+      <div class="table-divider">
+        <div class="pot-display">
+          <span class="pot-label">${t('l6Pot')}</span>
+          <span class="pot-amount">${g.pot}</span>
+        </div>
+      </div>
+    `;
+
+    // Community cards section (clearly separated horizontal row)
+    html += `
+      <div class="table-section community-section">
+        <div class="section-label">${t('l6CommunityCards')}</div>
+        <div class="community-card-row">
+          ${[0,1,2,3,4].map(i => {
+            if (i < g.communityCards.length) {
+              return renderCardFromObj(g.communityCards[i], { animated: true, delay: i * 0.1 });
+            } else {
+              return '<div class="card-placeholder"></div>';
+            }
+          }).join('')}
+        </div>
+      </div>
+    `;
+
+    // Divider
+    html += `<div class="table-divider-thin"></div>`;
+
+    // Player section
+    html += `
+      <div class="table-section player-section">
+        <div class="section-label">${t('l6You')}</div>
+        <div class="card-row">
+          ${g.playerCards.map(c => renderCardFromObj(c, { animated: true })).join('')}
+        </div>
+        ${!g.finished ? `
+          <div class="strength-display">
+            ${t('l6HandStrength')}
+            <div class="hand-strength-bar">
+              <div class="hand-strength-fill" style="width:${strength}%;background:${strengthColor}"></div>
+            </div>
+          </div>
+        ` : ''}
+        ${g.finished && g.playerHandName ? `<div class="hand-name">${g.playerHandName}</div>` : ''}
+      </div>
+    `;
+
+    html += `</div>`; // close practice-table-v2
+
+    // AI raise message
+    if (g.aiRaisedPending && g.message) {
+      html += `<div class="game-hint" style="border-color:var(--red);background:rgba(231,76,60,0.08);color:#e98b82;">
+        <span class="hint-icon">⚠️</span> ${g.message}
+      </div>`;
+    }
 
     // Result or actions
     if (g.finished) {
@@ -279,7 +323,7 @@ class App {
       }
     } else {
       const actions = g.getAvailableActions();
-      const toCall = g.currentBet - g.playerBet;
+      const toCall = Math.max(0, g.currentBet - g.playerBet);
 
       html += `<div class="game-actions">`;
       if (actions.includes('fold')) {
@@ -295,19 +339,19 @@ class App {
         html += `<button class="btn btn-primary" onclick="window.app.gameAction('raise')">${t('l6Raise')}</button>`;
       }
       if (actions.includes('allin')) {
-        html += `<button class="btn btn-danger" onclick="window.app.gameAction('allin')" style="background:linear-gradient(135deg,#e74c3c,#c0392b)">${t('l6AllIn')}</button>`;
+        html += `<button class="btn btn-danger" onclick="window.app.gameAction('allin')" style="background:linear-gradient(135deg,#e74c3c,#c0392b)">${t('l6AllIn')} (${g.playerChips})</button>`;
       }
       html += `</div>`;
 
       // Raise slider
       if (actions.includes('raise')) {
         const minRaise = 20;
-        const maxRaise = g.playerChips - toCall;
+        const maxRaise = Math.max(minRaise, g.playerChips - toCall);
         html += `
           <div class="raise-slider-group">
-            <input type="range" min="${minRaise}" max="${Math.max(minRaise, maxRaise)}" value="${this.raiseAmount}"
+            <input type="range" min="${minRaise}" max="${maxRaise}" value="${Math.min(this.raiseAmount, maxRaise)}"
               oninput="window.app.raiseAmount=parseInt(this.value);document.getElementById('raise-amt').textContent=this.value">
-            <span class="raise-amount" id="raise-amt">${this.raiseAmount}</span>
+            <span class="raise-amount" id="raise-amt">${Math.min(this.raiseAmount, maxRaise)}</span>
           </div>
         `;
       }
@@ -332,6 +376,27 @@ class App {
   gameAction(action) {
     if (!this.game) return;
     this.game.playerAction(action, this.raiseAmount);
+    this.renderGame();
+  }
+
+  resetChips() {
+    if (!this.game) return;
+    this.game.reset();
+    this.raiseAmount = 40;
+    this.renderGame();
+  }
+
+  setCustomChips() {
+    const input = document.getElementById('custom-chips');
+    if (!input) return;
+    const amount = parseInt(input.value);
+    if (isNaN(amount) || amount < 100) return;
+    if (!this.game) {
+      this.game = new PokerGame(amount);
+    } else {
+      this.game.setChips(amount);
+    }
+    this.raiseAmount = 40;
     this.renderGame();
   }
 
