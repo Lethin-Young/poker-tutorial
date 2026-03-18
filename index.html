@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Texas Hold'em Tutorial | 德州扑克教程</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♠️</text></svg>">
+</head>
+<body>
+  <!-- Header -->
+  <header id="app-header">
+    <div class="header-left">
+      <span class="logo-icon">♠</span>
+      <span class="logo-text" data-i18n="appTitle">德州扑克教程</span>
+    </div>
+    <div class="header-right">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="zh">中文</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Disclaimer Banner -->
+  <div id="disclaimer-banner">
+    <span class="disclaimer-icon">ℹ️</span>
+    <span data-i18n="disclaimer">本教程中的所有筹码仅用于演示目的，不涉及任何真实金钱交易。</span>
+    <button class="dismiss-btn" onclick="this.parentElement.style.display='none'">✕</button>
+  </div>
+
+  <!-- Main Content -->
+  <main id="app-main">
+    <!-- Sidebar Progress -->
+    <nav id="sidebar">
+      <div class="sidebar-title" data-i18n="lessonProgress">课程进度</div>
+      <ul id="lesson-list"></ul>
+    </nav>
+
+    <!-- Content Area -->
+    <section id="content-area">
+      <!-- Dynamic lesson content rendered here -->
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer id="app-footer">
+    <p data-i18n="footerDisclaimer">⚠️ 所有筹码仅用于演示和学习目的，不涉及任何真实金钱交易。</p>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
